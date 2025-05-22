@@ -1,4 +1,3 @@
-// File: src/components/VideoDetails.js
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -7,6 +6,7 @@ function VideoDetails({ video }) {
   const [selectedAudio, setSelectedAudio] = useState(null);
   const [merging, setMerging] = useState(false);
   const [mergeStatus, setMergeStatus] = useState('');
+  const [error, setError] = useState('');
 
   const handleMerge = async () => {
     if (!selectedVideo || !selectedAudio) {
@@ -16,6 +16,7 @@ function VideoDetails({ video }) {
 
     setMerging(true);
     setMergeStatus('Merging video and audio... Please wait (approx. 10–30 seconds)');
+    setError('');
 
     try {
       const res = await axios.post('https://yt-downloader-backen.onrender.com/api/merge', {
@@ -27,7 +28,7 @@ function VideoDetails({ video }) {
       window.location.href = downloadUrl;
     } catch (err) {
       console.error('Error merging video and audio:', err);
-      setMergeStatus('Failed to merge video and audio.');
+      setError('Failed to merge video and audio. Please try again.');
     } finally {
       setMerging(false);
     }
@@ -37,7 +38,8 @@ function VideoDetails({ video }) {
     formats?.map((f) => (
       <div key={f.format_id} style={{ marginBottom: '10px' }}>
         <input
-          type="checkbox"
+          type="radio"
+          name={labelFn.name}
           checked={selectedFn?.url === f.url}
           onChange={() => setSelectedFn(f)}
         />
@@ -75,6 +77,7 @@ function VideoDetails({ video }) {
       </button>
 
       {mergeStatus && <p style={{ marginTop: '10px', color: '#555' }}>{mergeStatus}</p>}
+      {error && <p style={{ marginTop: '10px', color: 'red' }}>{error}</p>}
     </div>
   );
 }

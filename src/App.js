@@ -6,7 +6,7 @@ function App() {
   const [videoData, setVideoData] = useState(null);
 
   return (
-    <div>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1>YouTube Video Downloader</h1>
       <VideoInput setVideoData={setVideoData} />
       {videoData && <VideoDetails video={videoData} />}
