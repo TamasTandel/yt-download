@@ -1,38 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 function VideoDetails({ video }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedAudio, setSelectedAudio] = useState(null);
-  const [merging, setMerging] = useState(false);
-  const [mergeStatus, setMergeStatus] = useState('');
-  const [error, setError] = useState('');
-
-  const handleMerge = async () => {
-    if (!selectedVideo || !selectedAudio) {
-      alert('Please select both video and audio formats.');
-      return;
-    }
-
-    setMerging(true);
-    setMergeStatus('Merging video and audio... Please wait (approx. 10–30 seconds)');
-    setError('');
-
-    try {
-      const res = await axios.post('https://yt-downloader-backen.onrender.com/api/merge', {
-        videoUrl: selectedVideo.url,
-        audioUrl: selectedAudio.url,
-      });
-      const downloadUrl = res.data.downloadUrl;
-      setMergeStatus('Merge complete! Downloading...');
-      window.location.href = downloadUrl;
-    } catch (err) {
-      console.error('Error merging video and audio:', err);
-      setError('Failed to merge video and audio. Please try again.');
-    } finally {
-      setMerging(false);
-    }
-  };
 
   const renderDownloadLinks = (formats, labelFn, selectedFn, setSelectedFn) =>
     formats?.map((f) => (
@@ -46,6 +16,15 @@ function VideoDetails({ video }) {
         <label style={{ marginLeft: '8px' }}>
           {labelFn(f)} — {f.filesize ? (f.filesize / (1024 * 1024)).toFixed(2) + ' MB' : 'Unknown size'}
         </label>
+        <a
+          href={f.url}
+          download
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ marginLeft: '15px', color: '#007bff' }}
+        >
+          Download
+        </a>
       </div>
     ));
 
@@ -59,25 +38,6 @@ function VideoDetails({ video }) {
 
       <h3>Audio Only Formats:</h3>
       {renderDownloadLinks(video.audio_only_formats, (f) => `Audio Only ${f.abr}kbps`, selectedAudio, setSelectedAudio)}
-
-      <button
-        onClick={handleMerge}
-        disabled={merging}
-        style={{
-          marginTop: '20px',
-          padding: '10px 15px',
-          backgroundColor: merging ? '#6c757d' : '#28a745',
-          color: '#fff',
-          borderRadius: '5px',
-          fontWeight: 'bold',
-          cursor: merging ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {merging ? 'Merging...' : 'Merge and Download'}
-      </button>
-
-      {mergeStatus && <p style={{ marginTop: '10px', color: '#555' }}>{mergeStatus}</p>}
-      {error && <p style={{ marginTop: '10px', color: 'red' }}>{error}</p>}
     </div>
   );
 }
