@@ -1,70 +1,167 @@
-# Getting Started with Create React App
+# YouTube Video Downloader Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based frontend application for downloading YouTube videos with a modern, user-friendly interface.
+
+## Features
+
+- Clean and intuitive user interface
+- Video quality selection
+- Download progress tracking
+- Video preview functionality
+- Responsive design for all devices
+- Dark/Light theme support
+
+## Prerequisites
+
+- Node.js 18 or higher
+- npm or yarn
+- Docker (optional, for containerized deployment)
+
+## Installation
+
+### Local Development
+
+1. Clone the repository
+2. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm start
+   ```
+   The application will be available at `http://localhost:3000`
+
+### Using Docker
+
+1. Build the Docker image:
+   ```bash
+   docker build -t youtube-downloader-frontend .
+   ```
+2. Run the container:
+   ```bash
+   docker run -p 3000:80 youtube-downloader-frontend
+   ```
+
+## Environment Variables
+
+Create a `.env` file in the frontend directory:
+
+```env
+REACT_APP_API_URL=http://localhost:5000
+REACT_APP_NODE_ENV=development
+```
+
+## Project Structure
+
+```
+frontend/
+├── public/          # Static files
+├── src/             # Source files
+│   ├── components/  # React components
+│   ├── pages/       # Page components
+│   ├── styles/      # CSS/SCSS files
+│   ├── utils/       # Utility functions
+│   ├── App.js       # Main App component
+│   └── index.js     # Entry point
+├── package.json     # Dependencies and scripts
+└── Dockerfile       # Docker configuration
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
+- `npm start`: Run development server
+- `npm build`: Build for production
+- `npm test`: Run tests
+- `npm run eject`: Eject from Create React App
 
-### `npm start`
+## Docker Deployment
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+1. Build the image:
+   ```bash
+   docker build -t your-username/youtube-downloader-frontend .
+   ```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+2. Push to Docker Hub:
+   ```bash
+   docker push your-username/youtube-downloader-frontend
+   ```
 
-### `npm test`
+3. Pull and run on another machine:
+   ```bash
+   docker pull your-username/youtube-downloader-frontend
+   docker run -p 3000:80 your-username/youtube-downloader-frontend
+   ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Usage Guide
 
-### `npm run build`
+1. **Enter Video URL**
+   - Paste a YouTube video URL in the input field
+   - Click "Analyze" to fetch video information
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2. **Select Quality**
+   - Choose desired video quality from available options
+   - View estimated file size and format details
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. **Download**
+   - Click "Download" to start the process
+   - Monitor progress in the progress bar
+   - Access downloaded file when complete
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Development
 
-### `npm run eject`
+### Code Style
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- Follow React best practices
+- Use functional components and hooks
+- Implement proper error handling
+- Maintain responsive design principles
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Testing
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Run the test suite:
+```bash
+npm test
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Troubleshooting
 
-## Learn More
+Common issues and solutions:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. **API Connection Issues**
+   - Verify backend server is running
+   - Check API URL in environment variables
+   - Ensure CORS is properly configured
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+2. **Build Issues**
+   - Clear npm cache: `npm cache clean --force`
+   - Delete node_modules and reinstall
+   - Update Node.js version
 
-### Code Splitting
+3. **Docker Issues**
+   - Ensure ports are not in use
+   - Check Docker daemon is running
+   - Verify network connectivity
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Browser Support
 
-### Analyzing the Bundle Size
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Contributing
 
-### Making a Progressive Web App
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes
+4. Push to the branch
+5. Create a Pull Request
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## License
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT License
