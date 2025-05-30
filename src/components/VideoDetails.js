@@ -1,85 +1,124 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000';
 
 function VideoDetails({ video }) {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedAudio, setSelectedAudio] = useState(null);
-  const [merging, setMerging] = useState(false);
-  const [mergeError, setMergeError] = useState('');
-  const [mergeUrl, setMergeUrl] = useState('');
-  const [mergedFileInfo, setMergedFileInfo] = useState(null);
-  const [mergeStatus, setMergeStatus] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const handleMerge = async () => {
     if (!selectedVideo || !selectedAudio) {
-      setMergeError('Please select both video and audio formats');
+      setError('Please select both video and audio formats');
       return;
     }
-
-    if (!selectedVideo.format_id || !selectedAudio.format_id) {
-      setMergeError('Invalid format selection. Please try different formats.');
-      return;
-    }
-
-    setMerging(true);
-    setMergeError('');
-    setMergeUrl('');
-    setMergedFileInfo(null);
-    setMergeStatus('Starting merge process...');
 
     try {
-      // Get the base video URL
-      const baseUrl = video.url;
-      if (!baseUrl) {
-        throw new Error('Video URL not found');
+      setIsLoading(true);
+      setError(null);
+
+      // Debug log to see the video object structure
+      console.log('Video object:', video);
+
+      // Extract video ID from the video URL if id is not directly available
+      let videoId = video.id || video.video_id;
+      if (!videoId && video.url) {
+        try {
+          const urlObj = new URL(video.url);
+          videoId = urlObj.searchParams.get('v');
+        } catch (e) {
+          console.error('Error parsing video URL:', e);
+        }
       }
 
-      // Create URLs with format IDs
-      const videoUrl = selectedVideo.url;
-      const audioUrl = selectedAudio.url;
+      // If still no video ID, try to extract from full URL
+      if (!videoId && video.fullUrl) {
+        try {
+          const urlObj = new URL(video.fullUrl);
+          videoId = urlObj.searchParams.get('v');
+        } catch (e) {
+          console.error('Error parsing full URL:', e);
+        }
+      }
 
-      if (!videoUrl || !audioUrl) {
-        throw new Error('Format URLs not available');
+      console.log('Extracted video ID:', videoId);
+
+      if (!videoId) {
+        throw new Error('Video ID not found. Please try refreshing the page.');
+      }
+
+      // Get format IDs
+      const videoFormatId = selectedVideo.format_id;
+      const audioFormatId = selectedAudio.format_id;
+
+      if (!videoFormatId || !audioFormatId) {
+        throw new Error('Format IDs not found');
       }
 
       console.log('Starting merge with formats:', {
         video: {
-          format_id: selectedVideo.format_id,
+          id: videoId,
+          format_id: videoFormatId,
           resolution: selectedVideo.resolution,
           filesize: formatFileSize(selectedVideo.filesize)
         },
         audio: {
-          format_id: selectedAudio.format_id,
+          format_id: audioFormatId,
           bitrate: selectedAudio.abr,
           filesize: formatFileSize(selectedAudio.filesize)
         }
       });
 
-      setMergeStatus('Downloading and merging files...');
-      const response = await axios.post(`${API_BASE_URL}/api/merge`, {
-        videoUrl: `${baseUrl}&itag=${selectedVideo.format_id}`,
-        audioUrl: `${baseUrl}&itag=${selectedAudio.format_id}`
+      // Create URLs with format IDs
+      const videoUrl = `https://www.youtube.com/watch?v=${videoId}&itag=${videoFormatId}`;
+      const audioUrl = `https://www.youtube.com/watch?v=${videoId}&itag=${audioFormatId}`;
+
+      const response = await fetch(`${API_BASE_URL}/api/merge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoUrl, audioUrl })
       });
 
-      if (!response.data || !response.data.downloadUrl) {
-        throw new Error('Invalid response from server');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.details || 'Failed to merge video');
       }
 
-      setMergeUrl(response.data.downloadUrl);
-      setMergedFileInfo({
-        size: response.data.fileSizeMB,
-        name: response.data.fileName
-      });
-      setMergeStatus('Merge completed successfully!');
+      // Check if the response is JSON (error) or blob (video)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.details || 'Server returned an error');
+      }
+
+      // Create a blob from the video stream
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        throw new Error('Received empty file from server');
+      }
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${video.title || 'video'}_${Date.now()}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setIsLoading(false);
+      setSuccess(true);
     } catch (error) {
-      console.error('Merge error:', error.response?.data || error);
-      const errorMessage = error.response?.data?.details || error.message || 'Failed to merge video and audio. Please try again.';
-      setMergeError(`Error: ${errorMessage}`);
-      setMergeStatus('');
-    } finally {
-      setMerging(false);
+      console.error('Merge error:', error);
+      setError(error.message);
+      setIsLoading(false);
     }
   };
 
@@ -314,7 +353,7 @@ function VideoDetails({ video }) {
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <button
           onClick={handleMerge}
-          disabled={merging || !selectedVideo || !selectedAudio}
+          disabled={isLoading || !selectedVideo || !selectedAudio}
           style={{
             padding: '12px 24px',
             backgroundColor: !selectedVideo || !selectedAudio ? '#ccc' : '#007bff',
@@ -326,62 +365,21 @@ function VideoDetails({ video }) {
             transition: 'background-color 0.3s ease'
           }}
         >
-          {merging ? 'Merging...' : 'Merge Selected Video and Audio'}
+          {isLoading ? 'Merging...' : 'Merge Selected Video and Audio'}
         </button>
 
-        {mergeStatus && (
+        {success && (
           <p style={{ 
-            color: mergeStatus.includes('error') ? '#dc3545' : '#28a745',
+            color: '#28a745',
             marginTop: '10px',
             fontSize: '1.1em'
           }}>
-            {mergeStatus}
+            Merge successful! Your video is ready to download.
           </p>
         )}
 
-        {mergeError && (
-          <p style={{ color: '#dc3545', marginTop: '10px' }}>{mergeError}</p>
-        )}
-
-        {mergeUrl && mergedFileInfo && (
-          <div style={{ 
-            marginTop: '20px',
-            padding: '20px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '8px',
-            border: '2px solid #28a745'
-          }}>
-            <p style={{ color: '#28a745', marginBottom: '15px', fontSize: '1.1em' }}>
-              Merge successful! Your video is ready to download.
-            </p>
-            <div style={{ 
-              backgroundColor: '#e9ecef',
-              padding: '10px',
-              borderRadius: '4px',
-              marginBottom: '15px',
-              display: 'inline-block'
-            }}>
-              <span style={{ fontWeight: 'bold' }}>Final File Size:</span> {mergedFileInfo.size} MB
-            </div>
-            <a
-              href={mergeUrl}
-              download={mergedFileInfo.name}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '5px',
-                fontSize: '1.1em',
-                transition: 'background-color 0.3s ease'
-              }}
-            >
-              Download Merged Video
-            </a>
-          </div>
+        {error && (
+          <p style={{ color: '#dc3545', marginTop: '10px' }}>{error}</p>
         )}
       </div>
     </div>
